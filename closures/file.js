@@ -51,7 +51,7 @@ if (Math.random() > 0.5) {
 } else {
   var x = 2;
 }
-console.log(x);
+// console.log(x);
 
 // let and const allows you to create block scoped variables
 if (Math.random() > 0.5) {
@@ -59,4 +59,16 @@ if (Math.random() > 0.5) {
 } else {
   const y = 2;
 }
-console.log(y);
+// console.log(y);
+
+//! 3. Closures
+function makeFunc() {
+  const name = "Mozilla";
+  function displayName() {
+    console.log(name);
+  }
+  return displayName;
+}
+
+const myFunc = makeFunc();
+myFunc();
