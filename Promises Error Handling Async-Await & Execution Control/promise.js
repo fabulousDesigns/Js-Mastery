@@ -22,7 +22,6 @@ let promise2 = new Promise(function (resolve, reject) {
   // after 1 second signal that the job is done with the result "done"
   setTimeout(() => resolve("done"), 1000);
 });
-console.log(promise2);
 // To summarize, the executor should perform a job (usually something that takes time) and then call resolve or reject to change the state of the corresponding promise object.
 // A promise that is either resolved or rejected is called “settled”, as opposed to an initially “pending” promise.
 // There can be only a single result or an error
@@ -56,3 +55,52 @@ let promise4 = new Promise(function (resolve, reject) {
  * The state and result are internal
 The properties state and result of the Promise object are internal. We can’t directly access them. We can use the methods .then/.catch/.finally for that. They are described below.
  */
+
+/**
+ * Consumers: then, catch
+A Promise object serves as a link between the executor (the “producing code” or “singer”) and the consuming functions (the “fans”), which will receive the result or error. Consuming functions can be registered (subscribed) using the methods .then and .catch.
+then
+The most important, fundamental one is .then.
+The syntax is:
+ */
+
+promise.then(
+  function (result) {
+    /* handle a successful result */
+  },
+  function (error) {
+    /* handle an error */
+  }
+);
+// The first argument of .then is a function that runs when the promise is resolved and receives the result.
+// The second argument of .then is a function that runs when the promise is rejected and receives the error.
+// For instance, here’s a reaction to a successfully resolved promise:
+
+let promise5 = new Promise(function (resolve, reject) {
+  setTimeout(() => resolve("done!"), 1000);
+}).then((result) => console.log(result));
+
+console.log("Resolve sub test");
+
+let promise6 = new Promise(function (resolve, reject) {
+  setTimeout(() => reject("Whoops!"), 1000);
+}).then((error) => console.log(error));
+// console.log("Reject sub Test");
+// If we’re interested only in successful completions, then we can provide only one function argument to .then:
+let promise7 = new Promise((resolve) => {
+  setTimeout(() => resolve("done!"), 1000);
+});
+
+promise.then((res) => console.log(res)); // shows "done!" after 1 second
+/**
+ * catch
+If we’re interested only in errors, then we can use null as the first argument: .then(null, errorHandlingFunction). Or we can use .catch(errorHandlingFunction), which is exactly the same:
+ */
+let promise8 = new Promise((resolve, reject) => {
+  setTimeout(() => reject(new Error("Whoops!")), 1000);
+});
+// .catch(f) is the same as promise.then(null, f)
+promise.catch(alert); // shows "Error: Whoops!" after 1 second
+// The call .catch(f) is a complete analog of .then(null, f), it’s just a shorthand.
+
+
