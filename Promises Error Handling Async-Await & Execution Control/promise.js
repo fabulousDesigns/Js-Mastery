@@ -1,106 +1,182 @@
-// A promise is a special JavaScript object that links the “producing code” and the “consuming code” together. In terms of our analogy: this is the “subscription list”. The “producing code” takes whatever time it needs to produce the promised result, and the “promise” makes that result available to all of the subscribed code when it’s ready.
-// The analogy isn’t terribly accurate, because JavaScript promises are more complex than a simple subscription list: they have additional features and limitations. But it’s fine to begin with.
-
-// The constructor syntax for a promise object is:
-let promise = new Promise(function (resolve, reject) {
-  // executor (the producing code)
-});
-// The function passed to new Promise is called the executor.
-/**
- * When new Promise is created, the executor runs automatically. It contains the producing code which should eventually produce the result. In terms of the analogy above: the executor is the “singer”.
-Its arguments resolve and reject are callbacks provided by JavaScript itself. Our code is only inside the executor.s
-When the executor obtains the result, be it soon or late, doesn’t matter, it should call one of these callbacks:
-resolve(value) — if the job is finished successfully, with result value.
-reject(error) — if an error has occurred, error is the error object.
-So to summarize: the executor runs automatically and attempts to perform a job. When it is finished with the attempt, it calls resolve if it was successful or reject if there was an error.
-The promise object returned by the new Promise constructor has these internal properties:
-state — initially "pending", then changes to either "fulfilled" when resolve is called or "rejected" when reject is called.
-result — initially undefined, then changes to value when resolve(value) is called or error when reject(error) is called.
- */
-let promise2 = new Promise(function (resolve, reject) {
-  // the function is executed automatically when the promise is constructed
-  // after 1 second signal that the job is done with the result "done"
-  setTimeout(() => resolve("done"), 1000);
-});
-// To summarize, the executor should perform a job (usually something that takes time) and then call resolve or reject to change the state of the corresponding promise object.
-// A promise that is either resolved or rejected is called “settled”, as opposed to an initially “pending” promise.
-// There can be only a single result or an error
-// The executor should call only one resolve or one reject. Any state change is final.
-
-// All further calls of resolve and reject are ignored:
-
-let promise3 = new Promise(function (resolve, reject) {
-  resolve("done");
-
-  reject(new Error("…")); // ignored
-  setTimeout(() => resolve("…")); // ignored
-});
-// The idea is that a job done by the executor may have only one result or an error.
-// Also, resolve/reject expect only one argument (or none) and will ignore additional arguments.
-/**
- * ! Reject with Error objects
-In case something goes wrong, the executor should call reject. That can be done with any type of argument (just like resolve). But it is recommended to use Error objects (or objects that inherit from Error). The reasoning for that will soon become apparent.
- */
-// ! Immediately calling resolve/reject
-// In practice, an executor usually does something asynchronously and calls resolve/reject after some time, but it doesn’t have to. We also can call resolve or reject immediately, like this:
-
-let promise4 = new Promise(function (resolve, reject) {
-  // not taking our time to do the job
-  resolve(123); // immediately give the result: 123
-});
-// For instance, this might happen when we start to do a job but then see that everything has already been completed and cached.
-// That’s fine. We immediately have a resolved promise.
-
-/**
- * The state and result are internal
-The properties state and result of the Promise object are internal. We can’t directly access them. We can use the methods .then/.catch/.finally for that. They are described below.
- */
-
-/**
- * Consumers: then, catch
-A Promise object serves as a link between the executor (the “producing code” or “singer”) and the consuming functions (the “fans”), which will receive the result or error. Consuming functions can be registered (subscribed) using the methods .then and .catch.
-then
-The most important, fundamental one is .then.
-The syntax is:
- */
-
-promise.then(
-  function (result) {
-    /* handle a successful result */
-  },
-  function (error) {
-    /* handle an error */
+// 1️⃣ Understanding the Promise Constructor: new Promise((resolve, reject) => {})
+// A Promise is a future value that is initially in the pending state, and then it either resolves (fulfilled) or rejects.
+const promise = new Promise((resolve, reject) => {
+  const success = true;
+  if (success) {
+    resolve("Operation was successful!");
+  } else {
+    reject("Something went wrong!");
   }
-);
-// The first argument of .then is a function that runs when the promise is resolved and receives the result.
-// The second argument of .then is a function that runs when the promise is rejected and receives the error.
-// For instance, here’s a reaction to a successfully resolved promise:
-
-let promise5 = new Promise(function (resolve, reject) {
-  setTimeout(() => resolve("done!"), 1000);
-}).then((result) => console.log(result));
-
-console.log("Resolve sub test");
-
-let promise6 = new Promise(function (resolve, reject) {
-  setTimeout(() => reject("Whoops!"), 1000);
-}).then((error) => console.log(error));
-// console.log("Reject sub Test");
-// If we’re interested only in successful completions, then we can provide only one function argument to .then:
-let promise7 = new Promise((resolve) => {
-  setTimeout(() => resolve("done!"), 1000);
 });
-
-promise.then((res) => console.log(res)); // shows "done!" after 1 second
 /**
- * catch
-If we’re interested only in errors, then we can use null as the first argument: .then(null, errorHandlingFunction). Or we can use .catch(errorHandlingFunction), which is exactly the same:
+ * Breakdown:
+new Promise() is the constructor.
+resolve: Called when the async operation succeeds.
+reject: Called when the async operation fails.
  */
-let promise8 = new Promise((resolve, reject) => {
-  setTimeout(() => reject(new Error("Whoops!")), 1000);
+// 2️⃣ Promise States: Pending, Fulfilled, Rejected
+// Promise Life Cycle:
+// Pending: The initial state; neither fulfilled nor rejected.
+// Fulfilled: The operation was successful, and the promise is resolved with a value.
+// Rejected: The operation failed, and the promise is rejected with an error.
+// Visualization:
+const myPromise = new Promise((resolve, reject) => {
+  // Assume async operation here
+  const success = true;
+
+  if (success) {
+    resolve("Success!");
+  } else {
+    reject("Failed!");
+  }
 });
-// .catch(f) is the same as promise.then(null, f)
-promise.catch(alert); // shows "Error: Whoops!" after 1 second
-// The call .catch(f) is a complete analog of .then(null, f), it’s just a shorthand.
+console.log(myPromise); // "Promise { <pending> }" until it's resolved or rejected
+// 3️⃣ .then(), .catch(), .finally() Chaining
+// .then():
+// Used to handle the fulfilled state of the promise.
+// It returns a new promise.
+myPromise.then((result) => {
+  console.log(result); // "Success!"
+});
+// .catch():
+// Catches errors if the promise is rejected.
+myPromise.catch((error) => {
+  console.log(error); // "Failed!"
+});
+// .finally():
+// Executes after either resolve or reject, no matter the outcome.
+// Useful for cleanup tasks like hiding loading spinners.
+myPromise.finally(() => {
+  console.log("Cleanup or finishing task after promise settles");
+});
+// 4️⃣ Return Values and Promise Chaining Flow
+// Each .then() or .catch() returns a new Promise, allowing for chained calls.
+new Promise((resolve, reject) => resolve("First"))
+  .then((result) => {
+    console.log(result); // "First"
+    return "Second"; // This will be passed to the next .then()
+  })
+  .then((result) => {
+    console.log(result); // "Second"
+    return "Third"; // Passes on to next .then() in the chain
+  });
+// 5️⃣ Error Propagation and Catching Errors Properly
+// Promises automatically propagate errors up the chain, so you don’t have to wrap each function in a try-catch.
+new Promise((resolve, reject) => reject("Oops!"))
+  .then((result) => {
+    console.log(result);
+  })
+  .catch((error) => {
+    console.error("Caught error:", error); // "Caught error: Oops!"
+  });
+/**
+ *! Important:
+ *? You only need one .catch() at the end of the chain to catch errors from any previous promise.
+ */
+// 6️⃣ Promise Combinators
+// 1. Promise.all()
+// Resolves when all promises are fulfilled.
+// Rejects as soon as any promise is rejected.
+const p1 = Promise.resolve(1);
+const p2 = Promise.resolve(2);
+const p3 = Promise.resolve(3);
+Promise.all([p1, p2, p3])
+  .then((results) => {
+    console.log(results); // [1, 2, 3]
+  })
+  .catch((error) => {
+    console.log("One of the promises failed!");
+  });
+/** 2. Promise.race()
+Resolves when any promise in the array resolves.
+Rejects when any promise rejects.
+   */
+const p4 = new Promise((resolve) => setTimeout(resolve, 100, "First"));
+const p5 = new Promise((resolve) => setTimeout(resolve, 200, "Second"));
+Promise.race([p1, p2]).then((result) => {
+  console.log(result); // "First" (p1 resolves first)
+});
+// 3. Promise.allSettled()
+// Waits for all promises to settle (either resolve or reject).
+// Returns an array with the results of all promises (success or failure).
+const p6 = Promise.resolve(1);
+const p7 = Promise.reject("Error!");
+const p8 = Promise.resolve(3);
+Promise.allSettled([p6, p7, p8]).then((results) => {
+  console.log(results);
+  // [
+  //   { status: "fulfilled", value: 1 },
+  //   { status: "rejected", reason: "Error!" },
+  //   { status: "fulfilled", value: 3 }
+  // ]
+});
+/**4. Promise.any()
+Resolves as soon as any promise resolves successfully.
+Rejects only if all promises are rejected. */
+const p9 = Promise.reject("Failed");
+const p10 = Promise.resolve(2);
+const p11 = Promise.resolve(3);
+Promise.any([p9, p10, p11])
+  .then((result) => {
+    console.log(result); // 2 (the first successful promise)
+  })
+  .catch(() => {
+    console.log("All promises were rejected");
+  });
+// 7️⃣ Promise Anti-Patterns to Avoid (e.g., Nesting Instead of Chaining)
+// ❌ Anti-Pattern: Nesting Promises
+// Nesting promises inside .then() instead of chaining can lead to callback hell again.
+new Promise((resolve) => resolve("Start")).then((result) => {
+  new Promise((resolve) => resolve("Middle")).then((result) => {
+    new Promise((resolve) => resolve("End")).then((result) =>
+      console.log(result)
+    );
+  });
+});
+// ✅ Better: Use Chaining Instead
+new Promise((resolve) => resolve("Start"))
+  .then((result) => "Middle")
+  .then((result) => "End")
+  .then((result) => console.log(result)); // "End"
+// Chaining makes things flatter, easier to follow, and cleaner.
+// 8️⃣ Convert Callback-based Functions to Promise-based (Promisify)
+// In Node.js, you can convert functions that use callbacks into Promise-based ones by promisifying them.
+// Example: Callback-based fs.readFile
+const fs = require("fs");
 
+// Original callback-based version
+fs.readFile("file.txt", "utf8", function (err, data) {
+  if (err) throw err;
+  console.log(data);
+});
+// Promisified Version:
+const fsPromises = require("fs").promises;
+// Using the Promise API
+fsPromises
+  .readFile("file.txt", "utf8")
+  .then((data) => console.log(data))
+  .catch((err) => console.error("Error reading file:", err));
+// Or manually promisify:
+function readFileAsync(filePath) {
+  return new Promise((resolve, reject) => {
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) reject(err);
+      else resolve(data);
+    });
+  });
+}
 
+readFileAsync("file.txt")
+  .then((data) => console.log(data))
+  .catch((err) => console.error("Error reading file:", err));
+
+/**
+   * 🎯 Recap
+Promise constructor: new Promise(resolve, reject) handles async flow.
+Promise states: pending, fulfilled, rejected.
+Chaining with .then(), .catch(), .finally() allows for clean, readable async code.
+Error handling is simplified with .catch().
+Promise combinators (.all(), .race(), .allSettled(), .any()) enable powerful async workflows.
+Avoid nesting promises; use chaining for readability.
+Promisify callback-based functions for cleaner, modern async code.
+   */
